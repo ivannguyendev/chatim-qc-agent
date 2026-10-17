@@ -151,9 +151,9 @@ vite.config.ts.timestamp-*
 # Editor/IDE
 .idea/
 .vscode/
-.agent*
-.claude*
-.project*
+.agent/*
+.claude/*
+.local/*
 
 # Playwright
 test-results/
