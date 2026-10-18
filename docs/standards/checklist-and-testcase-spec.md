@@ -387,11 +387,10 @@ test.describe('Attachment Upload', () => {
   test.describe('File Type & Extension Validation', () => {
     let chatApi: ChatApiClient;
     let channelId: string;
-    const workerIndex = test.info().workerIndex;
-    const uniqueChannelName = `qa_auto_${workerIndex}_${randomUUID()}`;
 
-    test.beforeEach(async ({ request }) => {
+    test.beforeEach(async ({ request }, testInfo) => {
       chatApi = new ChatApiClient(request);
+      const uniqueChannelName = `qa_auto_${testInfo.workerIndex}_${randomUUID()}`;
       const channel = await chatApi.createChannel({
         name: uniqueChannelName,
         members: ['user', 'leader'],
@@ -402,6 +401,7 @@ test.describe('Attachment Upload', () => {
     test.afterEach(async () => {
       if (channelId) {
         await chatApi.deleteChannel(channelId);
+        // Note: storageApi.deleteFile(attachmentId) cleanup handled here if attachment is not cascaded
       }
     });
 
