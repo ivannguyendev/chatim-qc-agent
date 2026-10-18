@@ -12,9 +12,11 @@ Repo QC automation viết bằng **Playwright + TypeScript**. Repo biến tài l
 - Tự động hoá khoảng 80% regression để Manual QA tập trung vào exploratory test.
 - Có quality gate đáng tin cậy để tự động deploy.
 
-## Quy trình
+## Quy trình tuần tự bắt buộc
 
-Tài liệu yêu cầu → Checklist → Test case → Playwright spec.
+Tài liệu yêu cầu → `docs/.../checklist.md` → `docs/.../testcases.md` → Playwright spec (`tests/`).
+
+> **Nguyên tắc:** Code test luôn phải có checklist và testcase làm căn cứ; testcase phải được sinh từ checklist. Tuyệt đối không để Agent tự lên plan rồi viết code test trực tiếp mà bỏ qua 2 tài liệu này.
 
 Quy ước chi tiết dành cho agent nằm trong [CLAUDE.md](CLAUDE.md).
 
@@ -40,4 +42,4 @@ Chọn môi trường bằng biến `TEST_ENV` (`staging` hoặc `production`).
 - `tests/regression/`: test chi tiết theo module
 - `tests/api/`: test tầng API
 - `docs/`: tài liệu hoàn chỉnh (checklist, test case)
-- `INDEXES.csv`: bảng truy vết test case
+- `INDEXES.csv`: chỉ mục tìm kiếm context codebase cho AI Agent (path, kind, purpose, key_symbols, used_by, tests, decisions)

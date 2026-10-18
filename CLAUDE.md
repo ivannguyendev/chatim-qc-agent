@@ -55,7 +55,7 @@ tests/api/    integration/contract tests, no browser
 test-data/    static payloads (mock-payloads/) and upload files (sample-files/)
 .github/workflows/ test-pr-smoke.yml (PR), test-nightly-full.yml (full + browser matrix, sharded)
 docs/         FINALIZED docs only: docs/<module>/<feature>/{checklist,testcases}.md
-INDEXES.csv   traceability index (see below)
+INDEXES.csv   codebase & context search index for agents (see below)
 ```
 
 Layer rules. These are the reasons the files are split this way:
@@ -77,83 +77,106 @@ The app's 70% unit layer lives in the app repo, not here. This repo owns the **A
 
 ## Workflows: requirement → spec pipeline
 
-1. **Phase 1, AI Analyst.** Turn the input into a structured checklist (format in the next section). Use the `ai-multimodal` skill for captures and videos. Add the rows to `INDEXES.csv` with `status=checklist`.
-2. **Phase 2, AI Test Generator.** Expand each item into a full test case (format in the next section). Set `status=designed`.
-3. **Phase 3, Automation Code Gen.** Map test cases to specs:
-   - `#` category → `test.describe`
-   - `##` subcategory → nested `describe`
-   - item → one `test('TC-<FEATURE>-<NNN> <title>', { tag: ['@p<priority>', ...] })`
-   - steps → `test.step`
+> **Nguyên tắc cốt lõi:** Code generation BẮT BUỘC phải dựa trên `checklist.md` và `testcases.md`, trong đó `testcases.md` BẮT BUỘC phải sinh từ `checklist.md`. Agent tuyệt đối KHÔNG tự ý lên plan rồi nhảy vào viết code test tự do khi chưa có 2 tài liệu nền tảng này.
 
-   Choose the layer using the pyramid rules above. Fill in `spec_file` and `layer` and set `status=automated`.
-4. **Plan** non-trivial work in `<agent dir>/plans/YYMMDD-<feature>.md`: `.claude/plans/` for Claude, `.agent/plans/` for other agents (date from `date +%y%m%d`). Both folders are gitignored. Never put plans in `docs/`.
-5. **Verify** with the narrowest command and report the command, exit code, pass/fail/flaky counts and the trace path for any failure. Never claim a pass without a run.
-6. **Promote** the finalized checklist and test cases into `docs/<module>/<feature>/`.
+1. **Phase 1: AI Analyst (Checklist).**
+   - Phân tích tài liệu yêu cầu (PRD, API doc, captures/videos).
+   - Xuất checklist ra `docs/<module>/<feature>/checklist.md` theo phân cấp `#`, `##` với immutable ID `CHK-<FEATURE>-<NNN>`, độ ưu tiên `[P1..P4]` và test layer `[@api | @e2e | @ui]`.
+   - *Ràng buộc:* Bắt buộc phải có file checklist này trước khi chuyển sang bước viết test case.
+
+2. **Phase 2: AI Test Generator (Test Cases từ Checklist).**
+   - Đọc `docs/<module>/<feature>/checklist.md` và mở rộng từng check item thành test case chi tiết trong `docs/<module>/<feature>/testcases.md` dưới dạng Structured Markdown Blocks (với Actors/Roles, Pre-conditions API Seeding, Test Data, Steps Action/Expected với verbatim UI error constants, và Post-conditions API Teardown).
+   - Duy trì ánh xạ 1-1 chính xác với checklist (`CHK-<FEATURE>-<NNN>` → `TC-<FEATURE>-<NNN>`).
+   - *Ràng buộc:* Toàn bộ test case phải sinh từ checklist, không tự ý bịa thêm test case ngoài checklist.
+
+3. **Phase 3: Automation Code Gen (Sinh mã từ test case).**
+   - BẮT BUỘC phải có đầy đủ `docs/.../checklist.md` và `docs/.../testcases.md` trước khi viết code.
+   - Chỉ viết code (`src/` và `tests/`) bám sát đúng các test case đã có trong `testcases.md`:
+     - `#` category → `test.describe`
+     - `##` subcategory → nested `describe`
+     - item → một `test('TC-<FEATURE>-<NNN> <title>', { tag: ['@p<priority>', ...] })`
+     - steps → `test.step`
+   - Phân tầng theo Test Pyramid (`tests/api/`, `tests/regression/`, `tests/smoke/`).
+   - Tái sử dụng hoặc tạo mới POM (`src/pages/`), API client (`src/api/`), components (`src/components/`).
+
+4. **Phase 4: Verify.**
+   - Chạy kiểm thử với lệnh hẹp nhất (narrowest command). Báo cáo rõ command, exit code, pass/fail/flaky counts và trace path nếu có failure. Tuyệt đối không kết luận pass nếu chưa chạy test thực tế.
+
+5. **Phase 5: Maintain Context Index.**
+   - Cập nhật `INDEXES.csv` cho tất cả các file code, test, doc vừa tạo hoặc chỉnh sửa.
 
 ## Checklist & test case format
 
-**Phase 1 checklist:**
+### Phase 1 Checklist
 
-```
+Format:
+
+```markdown
 F: <Feature name>
 # Category
 ## Subcategory
-[1] check item
+- [P1][@e2e] CHK-<FEATURE>-001: check item description
+- [P2][@api] CHK-<FEATURE>-002: check item description
 ```
 
 Rules:
-- Order items by user flow, start to finish. Within each step, list happy paths first, then error cases, then edge cases.
-- Group checks by UI region. For example, write one item for "all elements of region X display correctly", not one item per element.
-- Merge the checks of a single action flow into one item. For example, "clicking 'Disconnect account' opens the confirmation popup" is one item, not two.
-- Leave the app's header and footer out unless asked.
+- **Immutable ID:** `CHK-<FEATURE>-<NNN>` generated immediately in Phase 1.
+- **Priority:** `[P1]` (Critical), `[P2]` (High), `[P3]` (Medium), `[P4]` (Low).
+- **Test Layer:** `[@api]`, `[@e2e]`, `[@ui]`, `[@unit]`.
+- **"What, not How" principle:** Focus on business verification, never inline full tooltip strings or micro-steps into checklist.
+- **Atomic action flows:** 1 check item = 1 scenario verifying 1 observable business outcome.
+- **Exclude app header & footer** unless requested.
+- **Ordering:** Order items by user flow, start to finish. Within each step, list happy paths first, then error cases, then edge cases.
+- **Group checks by UI region:** For example, write one item for "all elements of region X display correctly", not one item per element.
+- **Coverage & Depth:** Test types to cover per run: UI, Security, Performance, Accessibility, Data validation. Depth level: High (edge cases and rare scenarios, default), Medium (common cases), or Low (essential cases only).
 
-The test types to cover are chosen per run:
-- UI
-- Security
-- Performance
-- Accessibility
-- Data validation
+### Phase 2 Test Case
 
-The depth level is also chosen per run: High (edge cases and rare scenarios, the default), Medium (common cases) or Low (essential cases only).
+Format (Structured Markdown Blocks):
 
-**Phase 2 numbering and expansion:**
-- Categories are numbered `#1`, `#2`.
-- Subcategories are numbered `##1.1`, `##1.2`.
-- Items are numbered sequentially across the whole feature (`1.`, `2.`, …) regardless of subcategory. This number becomes the `NNN` in `TC-<FEATURE>-<NNN>`.
-- The text after each item number stays exactly as written: never reword or translate it.
-
-Each test case has this shape:
-
+```markdown
+### TC-<FEATURE>-<NNN>: <Scenario Title>
+- **Trace:** CHK-<FEATURE>-<NNN> | **Priority:** [P1] | **Layer:** @e2e | **Suite:** smoke | **Role:** user
+- **Actors:**
+  - Actor 1 (Primary): Role `user` (storageState: `authFile('user')`)
+  - Actor 2 (Receiver, optional): Role `leader` (storageState: `authFile('leader')`)
+- **Pre-conditions (API Seeding):** State initialized via API using `qa_auto_<workerIndex>_<uuid>`
+- **Test Data:** Payloads or exact constants from `src/constants/`
+- **Steps:**
+  1. **Action:** Navigate to ...
+     **Expected:** Verifiable DOM state (`Visible`, `Disabled`, or exact text)
+  2. **Action:** ...
+     **Expected:** ...
+- **Post-conditions (API Teardown):** API cleanup call
 ```
-#1 Category
-##1.1 Subcategory
-1. [1] check item
-Title: …
-Pre-condition: …
-Description: …
-Steps:
-Step: 1
-Action: …
-Expected: …
-Data: … | N/A
-```
+
+Rules:
+- **1-to-1 mapping with `CHK-<FEATURE>-<NNN>`:** Each checklist item corresponds directly to one test case.
+- **Title & Description unified:** Merged cleanly into `<Scenario Title>`.
+- **Dedicated Actors / Roles:** Mapping directly to `src/fixtures/auth.fixture.ts` `storageState`. Support multi-actor concurrency for real-time chat.
+- **API Seeding in Pre-conditions:** State initialized via API using `qa_auto_<workerIndex>_<uuid>` isolation prefix.
+- **Mandatory API Teardown in Post-conditions:** API cleanup call to prevent data pollution across 10 workers.
+- **Verifiable Assertions:** Use verbatim UI copy from `src/constants/error-messages.ts` (`UI_MESSAGES.*`) and standardized DOM states (`Visible`, `Disabled`, or exact text).
+- **NEVER use CSV or Markdown tables** for detailed test cases (preserve multi-line steps and git diff integrity).
 
 ## INDEXES.csv
 
-One row per test case. Update it in the same change as the checklist, doc or spec it describes.
+`INDEXES.csv` is the codebase and context search index designed to help AI Agents find relevant files and complete context quickly and accurately without scanning the whole repository.
 
-| Column | Values / rule |
+One row per file (source code, test spec, doc, config). Update it whenever creating, moving, or modifying files.
+
+Columns:
+`path,kind,purpose,key_symbols,used_by,tests,decisions`
+
+| Column | Description / Allowed values |
 |---|---|
-| `tc_id` | `TC-<FEATURE>-<NNN>`. `NNN` is the sequential checklist item number. Must be unique. |
-| `module`, `feature`, `category`, `subcategory` | Taken from the checklist hierarchy. |
-| `priority` | `1`–`4` (1 Critical, 2 High, 3 Medium, 4 Low). |
-| `check_item` | Text kept exactly as written. Quote it if it contains commas or quotes. |
-| `layer` | `api` \| `e2e` \| `unit` |
-| `suite` | `smoke` \| `regression` |
-| `source_ref` | Stable origin of the requirement: a `docs/` path with an anchor, or an external ticket or URL. Never a transient input file. |
-| `spec_file` | Path to the spec, empty until automated. |
-| `status` | `checklist` → `designed` → `automated`, or `blocked` / `deprecated` |
-| `updated` | `YYYY-MM-DD` |
+| `path` | Relative path to the file (e.g. `src/pages/auth/login.page.ts`, `docs/auth/login/testcases.md`). |
+| `kind` | File kind: `page` \| `component` \| `api` \| `fixture` \| `constant` \| `util` \| `spec` \| `doc` \| `config`. |
+| `purpose` | Concise 1-line description of the file's domain and responsibility. |
+| `key_symbols` | Exported classes, functions, interfaces, locators, constants (comma-separated, quote if commas). |
+| `used_by` | Files or specs that import or invoke this file. |
+| `tests` | Test specs covering or exercising this file. |
+| `decisions` | Key architectural decisions, conventions, ADRs, or gotchas associated with this file. |
 
 ## Local-only material (gitignored on purpose; do not "fix" `.gitignore`)
 
