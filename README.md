@@ -38,9 +38,6 @@ Chọn môi trường bằng biến `TEST_ENV` (`staging` hoặc `production`).
 
 ## Thư mục chính
 
-- `tests/smoke/`: các luồng quan trọng
-- `tests/regression/`: test chi tiết theo module
-- `tests/api/`: test tầng API
-- `docs/`: tài liệu yêu cầu và kịch bản hoàn chỉnh của sản phẩm (checklist, test case)
-- `TESTING.md`: cẩm nang quy chuẩn kiểm thử (Checklist & Test Case standards, Playwright mappings)
-- `INDEXES.csv`: chỉ mục tìm kiếm context codebase cho AI Agent (path, kind, purpose, key_symbols, used_by, tests, decisions)
+- [TESTING.md](TESTING.md): Cẩm nang chuẩn mực thiết kế Phase 1 (Checklist), Phase 2 (Test Cases dạng Structured Markdown Block) và quy tắc ánh xạ sang mã nguồn Playwright.
+- [CLAUDE.md](CLAUDE.md): Bản quy ước hành vi, quy tắc kiểm thử, Definition of Done và kiến trúc dành riêng cho Claude Code và các AI Coding Agents khi làm việc trong dự án.
+- [INDEXES.csv](INDEXES.csv): Bảng chỉ mục tìm kiếm context nhanh, giúp kỹ sư và AI Agent tra cứu nhanh mối liên hệ giữa các files code, page objects, fixtures và tests.
