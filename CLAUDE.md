@@ -30,7 +30,8 @@ tests/smoke/  Critical path only (@smoke, budget < 5 min)
 tests/regression/<module>/ Detailed E2E scenarios
 tests/api/    Fast contract/integration tests without browser (business rules, limits, status codes)
 test-data/    mock-payloads/ and sample upload files (sample-files/)
-docs/         docs/<module>/<feature>/{checklist,testcases}.md, docs/standards/
+docs/         FINALIZED docs only: docs/<module>/<feature>/{checklist,testcases}.md
+TESTING.md    Test engineering standards, checklist & testcase format rules, Playwright mappings
 INDEXES.csv   Codebase context search index: path,kind,purpose,key_symbols,used_by,tests,decisions
 ```
 
@@ -59,7 +60,7 @@ npm run lint
 
 ## 5-Phase Workflow Pipeline
 
-> **BẮT BUỘC:** Không viết code test khi chưa có `checklist.md` và `testcases.md`. Code generation phải bám sát 100% test case đã thiết kế. Chi tiết xem tại `docs/standards/checklist-and-testcase-spec.md`.
+> **BẮT BUỘC:** Không viết code test khi chưa có `checklist.md` và `testcases.md`. Code generation phải bám sát 100% test case đã thiết kế. Chi tiết xem tại [TESTING.md](TESTING.md).
 
 1. **Phase 1: AI Analyst (Checklist)** $\rightarrow$ `docs/<module>/<feature>/checklist.md`
    - Phân cấp `#`, `##` với immutable ID `CHK-<FEATURE>-<NNN>`, tag `[P1..P4]` và `[@api | @e2e | @ui]`.
