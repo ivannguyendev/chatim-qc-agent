@@ -40,4 +40,5 @@ Chọn môi trường bằng biến `TEST_ENV` (`staging` hoặc `production`).
 
 - [TESTING.md](TESTING.md): Cẩm nang chuẩn mực thiết kế Phase 1 (Checklist), Phase 2 (Test Cases dạng Structured Markdown Block) và quy tắc ánh xạ sang mã nguồn Playwright.
 - [CLAUDE.md](CLAUDE.md): Bản quy ước hành vi, quy tắc kiểm thử, Definition of Done và kiến trúc dành riêng cho Claude Code và các AI Coding Agents khi làm việc trong dự án.
-- [INDEXES.csv](INDEXES.csv): Bảng chỉ mục tìm kiếm context nhanh, giúp kỹ sư và AI Agent tra cứu nhanh mối liên hệ giữa các files code, page objects, fixtures và tests.
+- [INDEXES.csv](INDEXES.csv): Bảng chỉ mục tra cứu context: mỗi dòng là một file/folder/config chính thức và các ngữ cảnh có thể trích xuất từ nó.
+- [.memory/](.memory/MEMORY.md): Bộ nhớ dùng chung cho mọi AI Agent (bối cảnh dự án, quyết định đã chốt và lý do đằng sau các quy tắc). Agent đọc `.memory/MEMORY.md` khi bắt đầu phiên làm việc.

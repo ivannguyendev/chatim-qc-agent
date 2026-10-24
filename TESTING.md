@@ -46,7 +46,7 @@ Quality engineering in this repository operates on a strict, unidirectional pipe
                                       v
 +-------------------------------------------------------------------------------+
 |  Phase 5: Context Index Maintenance                                           |
-|  Action: Record newly created/modified artifacts into INDEXES.csv             |
+|  Action: Check new/modified files; update INDEXES.csv if in scope (CLAUDE.md) |
 |          -> Fast agent context discovery and cross-module traceability        |
 +-------------------------------------------------------------------------------+
 ```
